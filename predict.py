@@ -129,31 +129,33 @@ elif food_type == "両":
     predict_data.append(False)
     predict_data.append(True)
 
-reg = (LinearRegression(positive=True))#RandomForestRegressor(max_depth=1000) #MultiOutputRegressor(LogisticRegression())
+reg = MLPClassifier(verbose=True, max_iter=5000)#verbose=True, random_state=0) #MultiOutputRegressor(LogisticRegression()) #(Lasso())#RandomForestRegressor(max_depth=1000) #MultiOutputRegressor(LogisticRegression())
 
-X = pd.get_dummies(X, columns=["天気", "脚"], dtype=bool)
+X = pd.get_dummies(X, columns=["天気", "脚"], dtype=int)
 
-#X = np.sin(X)
+#X = mm.fit_transform(X, y)
+X = (np.sin(X))
 print(X)
-#X = mm.fit_transform(X)
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.18, random_state=0)
+    X, y, test_size=float(sys.argv[23]), random_state=0)
 #X_train = mm.fit_transform(X_train)
 reg.fit(X_train, y_train)
 
-#predict_data = mm.fit_transform([predict_data])
-pred = reg.predict([predict_data])
-result = pred[0]
-print(result)
+#predict_data = mm.fit_transform(X=predict_data)
+predict_data = (np.sin(predict_data))#list(map(lambda data: math.sin(data), predict_data))
+result = reg.predict([predict_data])
+result = result[0]
 
+print(result)
 #if(result[3] == 0):
 #    print("着内")
 win_result = np.argmax(result[0:4]) + 1
-print([win_result])
-if(win_result < 4):
+if win_result < 4:
     print(f"{win_result}着")
 else:
     print("着外")
 
+score = reg.score(X_train, y_train)
+print(f"Model score (train) : {score}")
 score = reg.score(X_test, y_test)
-print(f"Model score : {score}")
+print(f"Model score (test): {score}")
