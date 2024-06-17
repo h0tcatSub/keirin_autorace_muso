@@ -6,7 +6,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn import preprocessing
 from sklearn.metrics import r2_score
 
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, StackingClassifier, StackingRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.linear_model import * 
 from sklearn.model_selection import train_test_split
@@ -44,7 +44,7 @@ sanren_tairitsu = (((float(sys.argv[21])) / 100))
 gear_percent = (((float(sys.argv[22])) / 100))
 
 X = df[["距離", "ラウンド数", "天気", "最高気温", "最低気温", "競走得点", "S", "B", "脚", "逃", "捲", "差", "マ", "1着", "2着", "3着", "着外", "勝率", "2連対率", "3連対率", "ギヤ倍率"]]
-y = df[["is_first", "is_second", "is_third", "is_takeoff"]]
+y = df[["is_first"]]
 predict_data = None
 if weather == "晴":
     predict_data = [distance, 
@@ -129,12 +129,19 @@ elif food_type == "両":
     predict_data.append(False)
     predict_data.append(True)
 
-reg = MLPClassifier(verbose=True, max_iter=5000)#verbose=True, random_state=0) #MultiOutputRegressor(LogisticRegression()) #(Lasso())#RandomForestRegressor(max_depth=1000) #MultiOutputRegressor(LogisticRegression())
+reg = StackingRegressor(
+    estimators=[
+        ("ls", Lasso(alpha=(np.average(X["競走得点"] + X["勝率"] + X["1着"])))),
+        ("rf", RandomForestRegressor(random_state=0, max_depth=int(len(X) * .3) * 2)),
+        ("lr", LinearRegression(positive=True)),
+    ],
+    final_estimator= MLPRegressor(verbose=True, random_state=0)
+)#(verbose=True, max_iter=5000)#verbose=True, random_state=0) #MultiOutputRegressor(LogisticRegression()) #(Lasso())#RandomForestRegressor(max_depth=1000) #MultiOutputRegressor(LogisticRegression())
 
 X = pd.get_dummies(X, columns=["天気", "脚"], dtype=int)
 
 #X = mm.fit_transform(X, y)
-X = (np.sin(X))
+X = np.abs(np.sin(X))
 print(X)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=float(sys.argv[23]), random_state=0)
@@ -142,18 +149,18 @@ X_train, X_test, y_train, y_test = train_test_split(
 reg.fit(X_train, y_train)
 
 #predict_data = mm.fit_transform(X=predict_data)
-predict_data = (np.sin(predict_data))#list(map(lambda data: math.sin(data), predict_data))
+predict_data = np.abs(np.sin(predict_data))#list(map(lambda data: math.sin(data), predict_data))
 result = reg.predict([predict_data])
 result = result[0]
 
-print(result)
+print(f"1着期待値 {result}")
 #if(result[3] == 0):
 #    print("着内")
-win_result = np.argmax(result[0:4]) + 1
-if win_result < 4:
-    print(f"{win_result}着")
-else:
-    print("着外")
+#win_result = np.argmax(result[0:4]) + 1
+#if win_result < 4:
+#    print(f"{win_result}着")
+#else:
+#    print("着外")
 
 score = reg.score(X_train, y_train)
 print(f"Model score (train) : {score}")
