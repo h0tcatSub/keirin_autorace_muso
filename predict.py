@@ -44,7 +44,7 @@ sanren_tairitsu = (((float(sys.argv[21])) / 100))
 gear_percent = (((float(sys.argv[22])) / 100))
 
 X = df[["距離", "ラウンド数", "天気", "最高気温", "最低気温", "競走得点", "S", "B", "脚", "逃", "捲", "差", "マ", "1着", "2着", "3着", "着外", "勝率", "2連対率", "3連対率", "ギヤ倍率"]]
-y = df[["is_first"]]
+y = df[[sys.argv[23]]]
 predict_data = None
 if weather == "晴":
     predict_data = [distance, 
